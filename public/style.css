@@ -29,8 +29,15 @@ body {
     background-color: #f0f0f0;
 }
 
-#definitionDisplay {
-    margin-top: 20px;
+button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#termList div {
+    margin-top: 10px;
     padding: 10px;
     border: 1px solid #ccc;
     background-color: #f9f9f9;
