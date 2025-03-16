@@ -77,13 +77,24 @@ function updateSelectedTerms() {
     });
 }
 
+// Добавляем проверку перед скачиванием
 downloadDocxButton.addEventListener('click', () => {
+    if (selectedTermsData.length === 0) {
+        alert('Вы не выбрали ни одного термина!');
+        return;
+    }
+    
     fetch('/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selectedTermsData)
     })
-    .then(response => response.blob())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.error); });
+        }
+        return response.blob();
+    })
     .then(blob => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -91,7 +102,6 @@ downloadDocxButton.addEventListener('click', () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    });
+    })
+    .catch(error => alert(`Ошибка: ${error.message}`));
 });
-
-
