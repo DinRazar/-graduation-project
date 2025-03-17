@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Админ-панель</h1>
+        <button id="logoutButton">Выйти</button>
+
+        <h2>Сообщения пользователей</h2>
+        <ul id="messagesList"></ul>
+
+        <h2>Добавление нового термина</h2>
+        <form id="addTermForm">
+            <label for="term">Термин:</label>
+            <input type="text" id="term" required>
+            
+            <label for="definition">Определение:</label>
+            <textarea id="definition" required></textarea>
+
+            <label for="gost">ГОСТ:</label>
+            <input type="text" id="gost">
+
+            <button type="submit">Добавить</button>
+        </form>
+        <p id="successMessage" style="color: green;"></p>
+    </div>
+
+    <script>
+        // Загружаем уведомления
+        async function fetchMessages() {
+            const response = await fetch('/admin/messages');
+            const messages = await response.json();
+            const messagesList = document.getElementById('messagesList');
+            messagesList.innerHTML = '';
+
+            messages.forEach(msg => {
+                const li = document.createElement('li');
+                li.textContent = `${msg.message} (от ${msg.date})`;
+
+                // Кнопка для удаления сообщения
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Удалить';
+                deleteButton.addEventListener('click', async () => {
+                    await deleteMessage(msg.id, li);
+                });
+
+                li.appendChild(deleteButton);
+                messagesList.appendChild(li);
+            });
+        }
+
+        // Удаление сообщения из БД и со страницы
+        async function deleteMessage(id, element) {
+            const response = await fetch(`/delete-feedback/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                element.remove();
+            } else {
+                alert('Ошибка при удалении сообщения');
+            }
+        }
+
+        // Добавление нового термина
+        document.getElementById('addTermForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const term = document.getElementById('term').value;
+            const definition = document.getElementById('definition').value;
+            const gost = document.getElementById('gost').value;
+
+            const response = await fetch('/admin/add-term', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ term, definition, gost })
+            });
+
+            if (response.ok) {
+                document.getElementById('successMessage').textContent = 'Термин добавлен!';
+                fetchMessages();
+            } else {
+                alert('Ошибка при добавлении термина');
+            }
+        });
+
+        // Выход из системы
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            await fetch('/admin/logout', { method: 'POST' });
+            window.location.href = '/admin/login';
+        });
+
+        // Автоматический выход при закрытии вкладки
+        window.addEventListener("beforeunload", function () {
+            navigator.sendBeacon("/logout");
+        });
+
+        fetchMessages();
+    </script>
+</body>
+</html>

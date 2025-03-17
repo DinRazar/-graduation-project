@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в админку</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Вход в админ-панель</h1>
+        <form id="loginForm">
+            <label for="username">Логин:</label>
+            <input type="text" id="username" required>
+            
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" required>
+            
+            <button type="submit">Войти</button>
+        </form>
+        <p id="errorMessage" style="color: red;"></p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                window.location.href = '/admin';
+            } else {
+                document.getElementById('errorMessage').textContent = data.error;
+            }
+        });
+    </script>
+</body>
+</html>
