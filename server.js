@@ -33,6 +33,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Получение всех терминов
+app.get('/terms', async (req, res) => {
+    try {
+        const [rows] = await db.query("SELECT * FROM terms ORDER BY Термин ASC");
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка при запросе к БД' });
+    }
+});
+
 // Поиск терминов
 app.get('/search', async (req, res) => {
     try {
@@ -101,6 +112,7 @@ app.post('/feedback', async (req, res) => {
     }
 });
 
+// Удаление сообщения обратной связи
 app.delete('/delete-feedback/:id', async (req, res) => {
     const feedbackId = req.params.id;
 
@@ -108,7 +120,7 @@ app.delete('/delete-feedback/:id', async (req, res) => {
         const [result] = await db.query("DELETE FROM feedback WHERE id = ?", [feedbackId]);
 
         if (result.affectedRows > 0) {
-            res.sendStatus(200); // Успешно удалено
+            res.sendStatus(200);
         } else {
             res.status(404).json({ error: 'Уведомление не найдено' });
         }
@@ -117,7 +129,6 @@ app.delete('/delete-feedback/:id', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при удалении уведомления' });
     }
 });
-
 
 // Страница входа в админку
 app.get('/admin/login', (req, res) => {
@@ -146,7 +157,6 @@ app.post('/logout', (req, res) => {
         res.sendStatus(200);
     });
 });
-
 
 // Страница админки (только для авторизованных)
 app.get('/admin', (req, res) => {

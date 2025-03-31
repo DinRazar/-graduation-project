@@ -8,28 +8,30 @@
 </head>
 <body>
     <div class="container">
-        <h1>Поиск терминов</h1>
-        <input type="text" id="searchInput" placeholder="Введите термин...">
-        <ul id="termList"></ul>
-
-        <h2>Выбранные термины</h2>
-        <ul id="selectedTerms"></ul>
-        <button id="downloadDocx">Скачать DOCX</button>
-
-        <!-- Кнопка для открытия формы обратной связи -->
-        <button id="feedbackButton">Сообщить об ошибке / предложить термин</button>
-
-        <!-- Форма обратной связи (по умолчанию скрыта) -->
-        <div id="feedbackFormContainer" class="hidden">
-            <h2>Обратная связь</h2>
-            <textarea id="feedbackMessage" placeholder="Опишите проблему или предложите новый термин"></textarea>
-            <button id="sendFeedback">Отправить</button>
-            <button id="closeFeedbackForm">Закрыть</button>
+        <div class="sidebar">
+            <button id="feedbackButton">Сообщить об ошибке / предложить термин</button>
+            <h2>Выбранные термины</h2>
+            <ul id="selectedTerms"></ul>
+            <button id="downloadDocx">Скачать DOCX</button>
+        </div>
+        <div class="main-content">
+            <h1>Поиск терминов</h1>
+            <input type="text" id="searchInput" placeholder="Введите термин...">
+            <ul id="termList"></ul>
         </div>
     </div>
+    <button id="backToTop" style="position: fixed; bottom: 20px; left: 20px; padding: 10px; border: none; border-radius: 5px;">
+        ↑ Вверх
+    </button>
 
+    <!-- Форма обратной связи (скрыта по умолчанию) -->
+    <div id="feedbackFormContainer" class="hidden">
+        <h2>Обратная связь</h2>
+        <textarea id="feedbackMessage" placeholder="Опишите проблему или предложите новый термин"></textarea>
+        <button id="sendFeedback">Отправить</button>
+        <button id="closeFeedbackForm">Закрыть</button>
+    </div>
     <script src="script.js"></script>
-
     <script>
         document.getElementById('feedbackButton').addEventListener('click', () => {
             document.getElementById('feedbackFormContainer').classList.remove('hidden');
@@ -61,7 +63,6 @@
             }
         });
     </script>
-
     <style>
         /* Стили для скрытой формы */
         .hidden {
