@@ -195,6 +195,42 @@ app.post('/admin/add-term', async (req, res) => {
     }
 });
 
+// Обновление термина
+app.put('/admin/update-term', async (req, res) => {
+    if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
+
+    try {
+        const { oldTerm, newTerm, definition, gost } = req.body;
+        if (!oldTerm || !newTerm || !definition) return res.status(400).json({ error: 'Некорректные данные' });
+
+        await db.query('UPDATE terms SET Термин = ?, Определение = ?, ГОСТ = ? WHERE Термин = ?', [newTerm, definition, gost, oldTerm]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка при обновлении термина' });
+    }
+});
+
+// Удаление термина через URL-параметр
+app.delete('/admin/delete-term/:term', async (req, res) => {
+    if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
+
+    try {
+        const term = decodeURIComponent(req.params.term);
+        if (!term) return res.status(400).json({ error: 'Некорректные данные' });
+
+        const [result] = await db.query('DELETE FROM terms WHERE Термин = ?', [term]);
+
+        if (result.affectedRows > 0) {
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'Термин не найден' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка при удалении термина' });
+    }
+});
 // Запуск сервера
 app.listen(port, () => {
     console.log(`Сервер запущен на http://localhost:${port}`);

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -99,4 +99,53 @@
         fetchMessages();
     </script>
 </body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель</title>
+    <link rel="stylesheet" href="style-admin.css">
+</head>
+<body>
+    <div class="container">
+        <header class="admin-header">
+            <h1>Админ-панель</h1>
+            <button id="logoutButton">Выйти</button>
+            <button id="toggleMessagesButton">Сообщения пользователей</button>
+        </header>
+
+        <section id="messagesPanel" class="hidden">
+            <h2>Сообщения пользователей</h2>
+            <ul id="messagesList"></ul>
+        </section>
+
+        <h2>Добавление нового термина</h2>
+        <form id="addTermForm">
+            <label for="term">Термин:</label>
+            <input type="text" id="term" required>
+
+            <label for="definition">Определение:</label>
+            <textarea id="definition" required></textarea>
+
+            <label for="gost">ГОСТ:</label>
+            <input type="text" id="gost">
+
+            <button type="submit">Добавить</button>
+        </form>
+        <p id="successMessage" style="color: green;"></p>
+
+        <h2>Все термины</h2>
+        <input type="text" id="searchInput" placeholder="Поиск по терминам..." />
+
+        <div id="termsList"></div>
+    </div>
+
+    <script src="/admin-script.js"></script>
+</body>
 </html>
+
+
