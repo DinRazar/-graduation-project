@@ -149,20 +149,36 @@ document.getElementById('searchInput').addEventListener('input', async (event) =
         const gostInput = document.createElement('input');
         gostInput.value = term.ГОСТ || '';
 
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'buttons';
+
         const saveButton = document.createElement('button');
         saveButton.textContent = 'Сохранить';
         saveButton.addEventListener('click', async () => {
             await updateTerm(term.Термин, termInput.value, definitionInput.value, gostInput.value);
         });
 
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Удалить';
+        deleteButton.style.color = 'black';
+        deleteButton.addEventListener('click', async () => {
+            if (confirm(`Вы уверены, что хотите удалить термин "${term.Термин}"?`)) {
+                await deleteTerm(term.Термин);
+            }
+        });
+
+        buttonsDiv.appendChild(saveButton);
+        buttonsDiv.appendChild(deleteButton);
+
         termDiv.appendChild(termInput);
         termDiv.appendChild(definitionInput);
         termDiv.appendChild(gostInput);
-        termDiv.appendChild(saveButton);
+        termDiv.appendChild(buttonsDiv);
 
         termsList.appendChild(termDiv);
     });
 });
+
 
 // Кнопка выхода
 document.getElementById('logoutButton').addEventListener('click', async () => {
