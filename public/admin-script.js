@@ -1,3 +1,4 @@
+// Загрузка сообщений пользователей
 async function fetchMessages() {
     const response = await fetch('/admin/messages');
     const messages = await response.json();
@@ -74,16 +75,15 @@ async function loadTerms() {
         const saveButton = document.createElement('button');
         saveButton.textContent = 'Сохранить';
         saveButton.addEventListener('click', async () => {
-            await updateTerm(term.Термин, termInput.value, definitionInput.value, gostInput.value);
+            await updateTerm(term.id, termInput.value, definitionInput.value, gostInput.value);
         });
 
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Удалить';
-        // deleteButton.style.backgroundColor = 'red';
         deleteButton.style.color = 'black';
         deleteButton.addEventListener('click', async () => {
             if (confirm('Вы уверены, что хотите удалить этот термин?')) {
-                await deleteTerm(term.Термин);
+                await deleteTerm(term.id);
             }
         });
 
@@ -100,8 +100,8 @@ async function loadTerms() {
 }
 
 // Удаление термина
-async function deleteTerm(term) {
-    const response = await fetch(`/admin/delete-term/${encodeURIComponent(term)}`, {
+async function deleteTerm(id) {
+    const response = await fetch(`/admin/delete-term/${id}`, {
         method: 'DELETE',
     });
 
@@ -112,12 +112,13 @@ async function deleteTerm(term) {
         alert('Ошибка при удалении термина');
     }
 }
+
 // Обновление термина
-async function updateTerm(oldTerm, newTerm, definition, gost) {
+async function updateTerm(id, term, definition, gost) {
     const response = await fetch('/admin/update-term', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ oldTerm, newTerm, definition, gost })
+        body: JSON.stringify({ id, term, definition, gost })
     });
 
     if (response.ok) {
@@ -155,7 +156,7 @@ document.getElementById('searchInput').addEventListener('input', async (event) =
         const saveButton = document.createElement('button');
         saveButton.textContent = 'Сохранить';
         saveButton.addEventListener('click', async () => {
-            await updateTerm(term.Термин, termInput.value, definitionInput.value, gostInput.value);
+            await updateTerm(term.id, termInput.value, definitionInput.value, gostInput.value);
         });
 
         const deleteButton = document.createElement('button');
@@ -163,7 +164,7 @@ document.getElementById('searchInput').addEventListener('input', async (event) =
         deleteButton.style.color = 'black';
         deleteButton.addEventListener('click', async () => {
             if (confirm(`Вы уверены, что хотите удалить термин "${term.Термин}"?`)) {
-                await deleteTerm(term.Термин);
+                await deleteTerm(term.id);
             }
         });
 
@@ -178,7 +179,6 @@ document.getElementById('searchInput').addEventListener('input', async (event) =
         termsList.appendChild(termDiv);
     });
 });
-
 
 // Кнопка выхода
 document.getElementById('logoutButton').addEventListener('click', async () => {
@@ -197,5 +197,6 @@ window.addEventListener("beforeunload", function () {
     navigator.sendBeacon("/logout");
 });
 
+// Инициализация
 fetchMessages();
 loadTerms();

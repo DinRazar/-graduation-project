@@ -27,7 +27,7 @@ function addTermToList(term) {
             li.removeChild(existingDefinition);
             button.textContent = 'Показать определение';
         } else {
-            fetch(`/term/${encodeURIComponent(term.Термин)}`)
+            fetch(`/term/${term.id}`)
                 .then(response => response.json())
                 .then(termData => {
                     const definition = document.createElement('div');
@@ -46,7 +46,7 @@ function addTermToList(term) {
     const addButton = document.createElement('button');
     addButton.textContent = 'Добавить в список';
     addButton.addEventListener('click', () => {
-        if (selectedTermsData.length < 10 && !selectedTermsData.some(t => t.Термин === term.Термин)) {
+        if (selectedTermsData.length < 10 && !selectedTermsData.some(t => t.id === term.id)) {
             selectedTermsData.push(term);
             updateSelectedTerms();
         }
@@ -105,7 +105,7 @@ function updateSelectedTerms() {
         const removeButton = document.createElement('button');
         removeButton.textContent = 'Удалить';
         removeButton.addEventListener('click', () => {
-            selectedTermsData = selectedTermsData.filter(t => t.Термин !== term.Термин);
+            selectedTermsData = selectedTermsData.filter(t => t.id !== term.id);
             updateSelectedTerms();
         });
 

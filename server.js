@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const path = require('path');
 const session = require('express-session');
+const bcrypt = require('bcrypt');
 const { Document, Packer, Paragraph, TextRun } = require('docx');
 
 const app = express();
@@ -22,7 +23,7 @@ const db = mysql.createPool({
 }).promise();
 
 // Настройка сессий
-app.use(session({
+app.use(session({ 
     secret: 'supersecretkey',
     resave: false,
     saveUninitialized: true
@@ -57,16 +58,29 @@ app.get('/search', async (req, res) => {
 });
 
 // Получение определения термина
-app.get('/term/:term', async (req, res) => {
+// app.get('/term/:term', async (req, res) => {
+//     try {
+//         const term = req.params.term;
+//         const [rows] = await db.query("SELECT * FROM terms WHERE Термин = ?", [term]);
+//         res.json(rows.length > 0 ? rows[0] : { error: 'Термин не найден' });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: 'Ошибка при запросе к БД' });
+//     }
+// });
+// Получение определения термина по id
+app.get('/term/:id', async (req, res) => {
     try {
-        const term = req.params.term;
-        const [rows] = await db.query("SELECT * FROM terms WHERE Термин = ?", [term]);
-        res.json(rows.length > 0 ? rows[0] : { error: 'Термин не найден' });
+        const id = req.params.id;
+        const [rows] = await db.query("SELECT * FROM terms WHERE id = ?", [id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Термин не найден' });
+        res.json(rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Ошибка при запросе к БД' });
     }
 });
+
 
 // Скачивание DOCX
 app.post('/download', async (req, res) => {
@@ -136,13 +150,38 @@ app.get('/admin/login', (req, res) => {
 });
 
 // Авторизация админа
-app.post('/admin/login', (req, res) => {
+// app.post('/admin/login', (req, res) => {
+//     const { username, password } = req.body;
+//     if (username === 'admin' && password === 'password') {
+//         req.session.isAdmin = true;
+//         res.json({ success: true });
+//     } else {
+//         res.status(401).json({ error: 'Неверные данные' });
+//     }
+// });
+
+app.post('/admin/login', async (req, res) => {
     const { username, password } = req.body;
-    if (username === 'admin' && password === 'password') {
-        req.session.isAdmin = true;
-        res.json({ success: true });
-    } else {
-        res.status(401).json({ error: 'Неверные данные' });
+
+    try {
+        const [rows] = await db.query('SELECT * FROM admin WHERE username = ?', [username]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ error: 'Неверные данные' });
+        }
+
+        const admin = rows[0];
+
+        const match = await bcrypt.compare(password, admin.password);
+        if (match) {
+            req.session.isAdmin = true;
+            res.json({ success: true });
+        } else {
+            res.status(401).json({ error: 'Неверные данные' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
 
@@ -196,14 +235,28 @@ app.post('/admin/add-term', async (req, res) => {
 });
 
 // Обновление термина
+// app.put('/admin/update-term', async (req, res) => {
+//     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
+
+//     try {
+//         const { oldTerm, newTerm, definition, gost } = req.body;
+//         if (!oldTerm || !newTerm || !definition) return res.status(400).json({ error: 'Некорректные данные' });
+
+//         await db.query('UPDATE terms SET Термин = ?, Определение = ?, ГОСТ = ? WHERE Термин = ?', [newTerm, definition, gost, oldTerm]);
+//         res.json({ success: true });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: 'Ошибка при обновлении термина' });
+//     }
+// });
 app.put('/admin/update-term', async (req, res) => {
     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
 
     try {
-        const { oldTerm, newTerm, definition, gost } = req.body;
-        if (!oldTerm || !newTerm || !definition) return res.status(400).json({ error: 'Некорректные данные' });
+        const { id, term, definition, gost } = req.body;
+        if (!id || !term || !definition) return res.status(400).json({ error: 'Некорректные данные' });
 
-        await db.query('UPDATE terms SET Термин = ?, Определение = ?, ГОСТ = ? WHERE Термин = ?', [newTerm, definition, gost, oldTerm]);
+        await db.query('UPDATE terms SET Термин = ?, Определение = ?, ГОСТ = ? WHERE id = ?', [term, definition, gost, id]);
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -211,15 +264,36 @@ app.put('/admin/update-term', async (req, res) => {
     }
 });
 
+
+
 // Удаление термина через URL-параметр
-app.delete('/admin/delete-term/:term', async (req, res) => {
+// app.delete('/admin/delete-term/:term', async (req, res) => {
+//     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
+
+//     try {
+//         const term = decodeURIComponent(req.params.term);
+//         if (!term) return res.status(400).json({ error: 'Некорректные данные' });
+
+//         const [result] = await db.query('DELETE FROM terms WHERE Термин = ?', [term]);
+
+//         if (result.affectedRows > 0) {
+//             res.json({ success: true });
+//         } else {
+//             res.status(404).json({ error: 'Термин не найден' });
+//         }
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: 'Ошибка при удалении термина' });
+//     }
+// });
+app.delete('/admin/delete-term/:id', async (req, res) => {
     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
 
     try {
-        const term = decodeURIComponent(req.params.term);
-        if (!term) return res.status(400).json({ error: 'Некорректные данные' });
+        const id = req.params.id;
+        if (!id) return res.status(400).json({ error: 'Некорректные данные' });
 
-        const [result] = await db.query('DELETE FROM terms WHERE Термин = ?', [term]);
+        const [result] = await db.query('DELETE FROM terms WHERE id = ?', [id]);
 
         if (result.affectedRows > 0) {
             res.json({ success: true });
@@ -231,6 +305,7 @@ app.delete('/admin/delete-term/:term', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при удалении термина' });
     }
 });
+
 // Запуск сервера
 app.listen(port, () => {
     console.log(`Сервер запущен на http://localhost:${port}`);
