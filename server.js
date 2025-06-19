@@ -3,7 +3,7 @@ const mysql = require('mysql2');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
-const { Document, Packer, Paragraph, TextRun } = require('docx');
+const { Document, Packer, Paragraph, TextRun, AlignmentType } = require('docx');
 
 const app = express();
 const port = 3000;
@@ -57,17 +57,6 @@ app.get('/search', async (req, res) => {
     }
 });
 
-// Получение определения термина
-// app.get('/term/:term', async (req, res) => {
-//     try {
-//         const term = req.params.term;
-//         const [rows] = await db.query("SELECT * FROM terms WHERE Термин = ?", [term]);
-//         res.json(rows.length > 0 ? rows[0] : { error: 'Термин не найден' });
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: 'Ошибка при запросе к БД' });
-//     }
-// });
 // Получение определения термина по id
 app.get('/term/:id', async (req, res) => {
     try {
@@ -81,28 +70,50 @@ app.get('/term/:id', async (req, res) => {
     }
 });
 
-
-// Скачивание DOCX
 app.post('/download', async (req, res) => {
     const selectedTerms = req.body;
+
     if (!selectedTerms || selectedTerms.length === 0) {
         return res.status(400).json({ error: 'Нет выбранных терминов' });
     }
 
-    // Генерация DOCX
     const doc = new Document({
         sections: [{
             properties: {},
-            children: selectedTerms.map(term =>
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: `${term.Термин}`, bold: true, font: "Times New Roman", size: 28 }),
-                        new TextRun({ text: `\n ${term.Определение || 'Нет данных'}`, font: "Times New Roman", size: 28 }),
-                        new TextRun({ text: `\nГОСТ: ${term.ГОСТ || 'Нет'}`, font: "Times New Roman", size: 28 }),
-                        new TextRun({ text: '\n\n', font: "Times New Roman", size: 28 }),
-                    ],
-                })
-            ),
+            children: selectedTerms.flatMap(term => {
+                // Приведение даты к формату YYYY-MM-DD
+                const formattedDate = term.ДатаВведения
+                    ? new Date(term.ДатаВведения).toISOString().split('T')[0]
+                    : 'не указана';
+
+                return [
+                    new Paragraph({
+                        alignment: AlignmentType.JUSTIFIED,
+                        spacing: { line: 360 }, // 1.5 интервал
+                        children: [
+                            new TextRun({
+                                text: `${term.Термин} - ${term.Определение || 'Нет данных'}`,
+                                font: "Times New Roman",
+                                size: 28
+                            })
+                        ]
+                    }),
+                    new Paragraph({
+                        alignment: AlignmentType.JUSTIFIED,
+                        spacing: { line: 360 },
+                        children: [
+                            new TextRun({
+                                text: `${term.ГОСТ || 'ГОСТ не указан'}. ${term.Наименование || 'Нет наименования'}. Дата введения ${formattedDate}. – М.: Стандартинформ. – ${term.Страниц || 'X'} с.`,
+                                font: "Times New Roman",
+                                size: 28
+                            })
+                        ]
+                    }),
+                    new Paragraph({ // пустая строка между терминами
+                        children: [new TextRun({ text: "", font: "Times New Roman", size: 28 })]
+                    })
+                ];
+            }),
         }]
     });
 
@@ -111,6 +122,7 @@ app.post('/download', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.send(buffer);
 });
+
 
 // Обратная связь (сохранение сообщений)
 app.post('/feedback', async (req, res) => {
@@ -148,17 +160,6 @@ app.delete('/delete-feedback/:id', async (req, res) => {
 app.get('/admin/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
-
-// Авторизация админа
-// app.post('/admin/login', (req, res) => {
-//     const { username, password } = req.body;
-//     if (username === 'admin' && password === 'password') {
-//         req.session.isAdmin = true;
-//         res.json({ success: true });
-//     } else {
-//         res.status(401).json({ error: 'Неверные данные' });
-//     }
-// });
 
 app.post('/admin/login', async (req, res) => {
     const { username, password } = req.body;
@@ -223,10 +224,10 @@ app.post('/admin/add-term', async (req, res) => {
     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
 
     try {
-        const { term, definition, gost } = req.body;
+        const { term, definition, gost, name, introduction_date, page_count } = req.body;
         if (!term || !definition) return res.status(400).json({ error: 'Заполните все поля' });
 
-        await db.query('INSERT INTO terms (Термин, Определение, ГОСТ) VALUES (?, ?, ?)', [term, definition, gost]);
+        await db.query('INSERT INTO terms (Термин, Определение, ГОСТ, Наименование, ДатаВведения, Страниц) VALUES (?, ?, ?, ?, ?, ?)', [term, definition, gost, name, introduction_date, page_count ]);
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -234,21 +235,6 @@ app.post('/admin/add-term', async (req, res) => {
     }
 });
 
-// Обновление термина
-// app.put('/admin/update-term', async (req, res) => {
-//     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
-
-//     try {
-//         const { oldTerm, newTerm, definition, gost } = req.body;
-//         if (!oldTerm || !newTerm || !definition) return res.status(400).json({ error: 'Некорректные данные' });
-
-//         await db.query('UPDATE terms SET Термин = ?, Определение = ?, ГОСТ = ? WHERE Термин = ?', [newTerm, definition, gost, oldTerm]);
-//         res.json({ success: true });
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: 'Ошибка при обновлении термина' });
-//     }
-// });
 app.put('/admin/update-term', async (req, res) => {
     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
 
@@ -264,28 +250,6 @@ app.put('/admin/update-term', async (req, res) => {
     }
 });
 
-
-
-// Удаление термина через URL-параметр
-// app.delete('/admin/delete-term/:term', async (req, res) => {
-//     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
-
-//     try {
-//         const term = decodeURIComponent(req.params.term);
-//         if (!term) return res.status(400).json({ error: 'Некорректные данные' });
-
-//         const [result] = await db.query('DELETE FROM terms WHERE Термин = ?', [term]);
-
-//         if (result.affectedRows > 0) {
-//             res.json({ success: true });
-//         } else {
-//             res.status(404).json({ error: 'Термин не найден' });
-//         }
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: 'Ошибка при удалении термина' });
-//     }
-// });
 app.delete('/admin/delete-term/:id', async (req, res) => {
     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
 

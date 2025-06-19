@@ -86,6 +86,7 @@ function organizeTermsByLetter(terms) {
 }
 
 // Поиск терминов
+
 searchInput.addEventListener('input', function() {
     const query = searchInput.value;
     fetch(`/search?q=${encodeURIComponent(query)}`)
@@ -142,3 +143,33 @@ downloadDocxButton.addEventListener('click', () => {
 backToTopButton.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 });
+
+        document.getElementById('feedbackButton').addEventListener('click', () => {
+            document.getElementById('feedbackFormContainer').classList.remove('hidden');
+        });
+
+        document.getElementById('closeFeedbackForm').addEventListener('click', () => {
+            document.getElementById('feedbackFormContainer').classList.add('hidden');
+        });
+
+        document.getElementById('sendFeedback').addEventListener('click', async () => {
+            const message = document.getElementById('feedbackMessage').value.trim();
+            if (!message) {
+                alert('Введите сообщение!');
+                return;
+            }
+
+            const response = await fetch('/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+
+            if (response.ok) {
+                alert('Сообщение отправлено!');
+                document.getElementById('feedbackMessage').value = '';
+                document.getElementById('feedbackFormContainer').classList.add('hidden');
+            } else {
+                alert('Ошибка отправки сообщения');
+            }
+        });

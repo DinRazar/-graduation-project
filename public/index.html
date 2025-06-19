@@ -23,8 +23,6 @@
     <button id="backToTop" style="position: fixed; bottom: 20px; left: 20px; padding: 10px; border: none; border-radius: 5px;">
         ↑ Вверх
     </button>
-
-    <!-- Форма обратной связи (скрыта по умолчанию) -->
     <div id="feedbackFormContainer" class="hidden">
         <h2>Обратная связь</h2>
         <textarea id="feedbackMessage" placeholder="Опишите проблему или предложите новый термин"></textarea>
@@ -32,58 +30,5 @@
         <button id="closeFeedbackForm">Закрыть</button>
     </div>
     <script src="script.js"></script>
-    <script>
-        document.getElementById('feedbackButton').addEventListener('click', () => {
-            document.getElementById('feedbackFormContainer').classList.remove('hidden');
-        });
-
-        document.getElementById('closeFeedbackForm').addEventListener('click', () => {
-            document.getElementById('feedbackFormContainer').classList.add('hidden');
-        });
-
-        document.getElementById('sendFeedback').addEventListener('click', async () => {
-            const message = document.getElementById('feedbackMessage').value.trim();
-            if (!message) {
-                alert('Введите сообщение!');
-                return;
-            }
-
-            const response = await fetch('/feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
-
-            if (response.ok) {
-                alert('Сообщение отправлено!');
-                document.getElementById('feedbackMessage').value = '';
-                document.getElementById('feedbackFormContainer').classList.add('hidden');
-            } else {
-                alert('Ошибка отправки сообщения');
-            }
-        });
-    </script>
-    <style>
-        /* Стили для скрытой формы */
-        .hidden {
-            display: none;
-        }
-
-        #feedbackFormContainer {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            padding: 20px;
-            border: 1px solid #ccc;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        #feedbackFormContainer textarea {
-            width: 100%;
-            height: 100px;
-            margin-bottom: 10px;
-        }
-    </style>
 </body>
 </html>

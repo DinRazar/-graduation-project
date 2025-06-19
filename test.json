@@ -1,0 +1,14 @@
+{
+  "id": "665be0a3f2a55b5f86d9a123",
+  "username": "dima_naumov",                  
+  "age": 21,                                
+  "is_active": true,                          
+  "last_login": "2025-06-01T18:45:00Z",     
+  "interests": ["футбол", "лего", "путешествия"], 
+  "profile": {
+    "city": "Дзержинск",
+    "country": "Россия"
+  }
+}
+
+

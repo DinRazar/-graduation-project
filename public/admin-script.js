@@ -35,11 +35,14 @@ document.getElementById('addTermForm').addEventListener('submit', async (event) 
     const term = document.getElementById('term').value;
     const definition = document.getElementById('definition').value;
     const gost = document.getElementById('gost').value;
+    const name = document.getElementById('name').value;
+    const introduction_date = document.getElementById('introduction_date').value;
+    const page_count = document.getElementById('page_count').value;
 
     const response = await fetch('/admin/add-term', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ term, definition, gost })
+        body: JSON.stringify({ term, definition, gost, name, introduction_date, page_count})
     });
 
     if (response.ok) {
