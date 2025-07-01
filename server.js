@@ -214,7 +214,7 @@ app.get('/admin/messages', async (req, res) => {
     if (!req.session.isAdmin) return res.status(403).json({ error: 'Нет доступа' });
 
     try {
-        const [rows] = await db.query('SELECT * FROM feedback ORDER BY id DESC');
+        const [rows] = await db.query('SELECT * FROM feedback ORDER BY created_at DESC');
         res.json(rows);
     } catch (err) {
         console.error(err);
